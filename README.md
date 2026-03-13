@@ -5,7 +5,7 @@ Minimal autoresearch-style trading research loop.
 ## Architecture
 - `prepare.py` — immutable oracle (fetch, backtest, evaluate)
 - `strategy.py` — only mutable strategy file
-- `program.md` — agent firmware (loop instructions)
+- `degen.md` — agent firmware (loop instructions)
 
 ## Usage
 ```bash

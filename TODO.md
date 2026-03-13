@@ -26,8 +26,8 @@
 - [ ] results.tsv writer
 
 ## Phase 3 — Agent loop
-- [ ] program.md template
-- [ ] Agent loop: read config → read program.md → propose → edit → commit → eval → keep/revert
+- [ ] degen.md template
+- [ ] Agent loop: read config → read degen.md → propose → edit → commit → eval → keep/revert
 - [ ] Git commit enforcement (exactly 1 file changed)
 - [ ] Error handling (try/except, auto-reset, never crash)
 - [ ] SandboxRunner abstraction (systemd backend for us)

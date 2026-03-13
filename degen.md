@@ -14,7 +14,7 @@ You are an autonomous quant researcher. Your job: discover trading strategies th
 - `prepare.py` — data pipeline + backtest engine + eval harness. IMMUTABLE. Read it to understand how your strategy is evaluated, but NEVER edit it.
 - `strategy.py` — your strategy code. THE ONLY FILE YOU EDIT.
 - `results.tsv` — experiment ledger. Don't edit directly, the eval appends to it.
-- `program.md` — this file. Read it, follow it.
+- `degen.md` — this file. Read it, follow it.
 
 ## How evaluation works
 When you run `python strategy.py`, it:
