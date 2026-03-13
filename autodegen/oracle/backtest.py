@@ -233,12 +233,17 @@ def execute_order(
     )
 
 
-def run_backtest(strategy: StrategyLike, bars: list[Bar], config: BacktestConfig) -> BacktestResult:
+def run_backtest(
+    strategy: StrategyLike,
+    bars: list[Bar],
+    config: BacktestConfig,
+    train_data: list[Bar] | None = None,
+) -> BacktestResult:
     portfolio = Portfolio(cash=config.initial_cash, total_equity=config.initial_cash)
     fills: list[Fill] = []
     pending_signals: list[Signal] = []
 
-    strategy.initialize([])
+    strategy.initialize(train_data or [])
 
     for bar in bars:
         for signal in pending_signals:
