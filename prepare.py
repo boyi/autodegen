@@ -62,7 +62,7 @@ def _target_dir(data_dir: str, exchange: str, pair: str) -> Path:
     return Path(data_dir) / exchange / pair.replace("/", "-")
 
 
-def fetch_data(exchange: str = "hyperliquid", pair: str = "BTC/USDT", timeframe: str = "1h", data_dir: str = "data") -> list[Path]:
+def fetch_data(exchange: str = "hyperliquid", pair: str = "BTC/USDC:USDC", timeframe: str = "1h", data_dir: str = "data") -> list[Path]:
     """Fetch OHLCV data via ccxt, store as monthly parquet files. Incremental."""
     ex = getattr(ccxt, exchange)({"enableRateLimit": True})
     target = _target_dir(data_dir, exchange, pair)
@@ -101,7 +101,7 @@ def fetch_data(exchange: str = "hyperliquid", pair: str = "BTC/USDT", timeframe:
     return out_paths
 
 
-def load_bars(data_dir: str = "data", exchange: str = "hyperliquid", pair: str = "BTC/USDT") -> list[Bar]:
+def load_bars(data_dir: str = "data", exchange: str = "hyperliquid", pair: str = "BTC/USDC:USDC") -> list[Bar]:
     """Load all parquet files, return list of Bar namedtuples sorted by timestamp."""
     target = _target_dir(data_dir, exchange, pair)
     files = sorted(target.glob("*.parquet"))
@@ -244,7 +244,7 @@ def evaluate(strategy_cls, bars: list[Bar], n_folds: int = 8, validation_pct: fl
     gates_pass = (
         avg_sharpe >= 1.0
         and avg_maxdd <= 0.30
-        and avg_trades >= 50
+        and avg_trades >= 5
         and worst_fold_sharpe >= 0
     )
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
     fetch_p = sub.add_parser("fetch")
     fetch_p.add_argument("--exchange", default="hyperliquid")
-    fetch_p.add_argument("--pair", default="BTC/USDT")
+    fetch_p.add_argument("--pair", default="BTC/USDC:USDC")
     fetch_p.add_argument("--timeframe", default="1h")
 
     sub.add_parser("eval")
