@@ -1,6 +1,6 @@
 # autodegen
 
-Minimal autoresearch-style trading research loop.
+Minimal autoresearch-style trading research loop. Inspired by Andrej Karpathy autoresearch design and approach [here](https://github.com/karpathy/autoresearch).
 
 ## Architecture
 - `prepare.py` — immutable oracle (fetch, backtest, evaluate)
