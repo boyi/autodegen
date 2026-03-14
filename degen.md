@@ -34,7 +34,7 @@ When you run `uv run python strategy.py`, it:
 - `bar_sharpe_wf` — mean bar-return Sharpe across WF folds (annualized, sqrt(8760))
 - `bar_sharpe_val` — bar-return Sharpe on validation holdout
 - `decay` — val_sharpe / wf_sharpe (overfit detector, 1.0 = perfect, <0.5 = likely overfit)
-- `train_test_gap` — mean(train_sharpe - test_sharpe) per fold (high = memorizing)
+- `fold_regime_gap` — mean(train_sharpe - test_sharpe) per fold; measures earlier-era vs later-era performance drift inside each WF split
 - `fold_std` — std of test Sharpes across folds (high = unstable)
 - `negative_fold_ratio` — fraction of folds with negative Sharpe
 - `maxdd_wf` / `maxdd_val` — max drawdown
@@ -57,18 +57,19 @@ When you run `uv run python strategy.py`, it:
 - `validation trades >= 5`
 - `fold_std <= 1.25`
 - `negative_fold_ratio <= 0.30`
-- `train_test_gap <= 0.75`
+- `fold_regime_gap <= 0.75`
 - `decay >= 0.50`
 
 ## Composite score formula
 ```
 composite = (
-    0.40 * clip(bar_sharpe / 3.0, 0, 1)
-  + 0.15 * clip(sortino / 5.0, 0, 1)
-  + 0.15 * clip(calmar / 3.0, 0, 1)
-  + 0.10 * clip((profit_factor - 1) / 2.0, 0, 1)
+    0.35 * clip(bar_sharpe_wf / 3.0, 0, 1)
+  + 0.10 * clip(bar_sharpe_val / 2.0, 0, 1)
+  + 0.15 * clip(sortino_wf / 5.0, 0, 1)
+  + 0.15 * clip(calmar_wf / 3.0, 0, 1)
+  + 0.10 * clip((profit_factor_wf - 1.0) / 2.0, 0, 1)
   + 0.10 * (1 - negative_fold_ratio)
-  + 0.10 * min(decay, 1.0)
+  + 0.05 * min(decay, 1.0)
 )
 ```
 
@@ -106,15 +107,54 @@ The canonical dataset is Binance `BTC/USDT:USDT` 1h bars from January 1, 2020 on
 
 Do not trust any result until `uv run python prepare.py validate` passes. A strategy that only works in bull markets will fail the fold variance gate.
 
-## Strategy ideas to explore
-- EMA/SMA crossovers with trend filters
-- Mean reversion (Bollinger Bands, RSI)
-- Momentum / breakout with volatility filter
-- Volatility regime switching (high vol vs low vol behavior)
-- Trend-following with adaptive parameters
-- Combining signals (momentum entry + mean reversion exit)
-- ATR-based position sizing / stop-losses
-- Multi-timeframe features (derive 4h/1d context from 1h bars)
+## Strategy search doctrine
+Do not anchor on canned indicator templates. Work backward from the evaluation metrics and search for simple trading rules that can make money robustly on BTC perpetual futures after fees and slippage.
+
+Your job is to discover structural edges, not just remix common indicators.
+
+For each new hypothesis:
+- Start from the current bottleneck in `results.tsv`:
+- weak walk-forward Sharpe,
+- weak validation Sharpe,
+- poor decay,
+- high fold variance,
+- excessive drawdown,
+- too few trades,
+- low profit factor.
+- Ask what market behavior could fix that bottleneck while preserving profitability.
+- Form one clear mechanism-level hypothesis before editing `strategy.py`.
+
+Think in terms of edge archetypes, not indicator names:
+- trend persistence,
+- momentum ignition or continuation,
+- breakout from compression,
+- mean reversion after exhaustion,
+- volatility expansion vs compression,
+- regime switching,
+- asymmetry between long and short behavior,
+- path-dependent exits,
+- risk management as edge,
+- participation filters,
+- market state filters derived from 1h bars.
+
+Creative and degenerate ideas are allowed if they remain:
+- simple,
+- explainable,
+- cost-aware,
+- parameter-light,
+- implementable from 1h bars only.
+
+Avoid local search traps:
+- do not spend many iterations only nudging thresholds or lookbacks,
+- if several experiments fail in the same family, pivot to a different family,
+- prefer changing one structural dimension over micro-tuning many parameters.
+
+Judge ideas by these questions:
+- Why should this make money on BTC perps specifically?
+- What regime(s) should it exploit?
+- Why should it survive unseen periods rather than only one era?
+- Which evaluation bottleneck is it meant to improve?
+- Is the rule simple enough to generalize?
 
 ## Current best
 best_composite: 0.00
