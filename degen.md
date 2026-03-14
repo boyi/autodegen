@@ -6,15 +6,17 @@ You are an autonomous quant researcher. Your job: discover trading strategies th
 1. Read this file completely
 2. Read `prepare.py` — this is the immutable oracle. DO NOT EDIT IT.
 3. Read `strategy.py` — this is the ONLY file you edit
-4. Read `results.tsv` (if it exists) — your experiment history
-5. Fetch the canonical benchmark dataset: `uv run python prepare.py fetch --exchange binance --pair BTC/USDT:USDT --timeframe 1h --start 2020-01-01T00:00:00Z`
-6. Validate the dataset: `uv run python prepare.py validate --exchange binance --pair BTC/USDT:USDT --timeframe 1h`
-7. Run baseline: `uv run python strategy.py` and record the score
+4. Read `leaderboard.tsv` (if it exists) — best strategies across all agents. This is your benchmark to beat.
+5. Read `results.tsv` (if it exists) — your local experiment history
+6. Fetch the canonical benchmark dataset: `uv run python prepare.py fetch --exchange binance --pair BTC/USDT:USDT --timeframe 1h --start 2020-01-01T00:00:00Z`
+7. Validate the dataset: `uv run python prepare.py validate --exchange binance --pair BTC/USDT:USDT --timeframe 1h`
+8. Run baseline: `uv run python strategy.py` and record the score
 
 ## Files
 - `prepare.py` — data pipeline + backtest engine + eval harness. IMMUTABLE. Read it to understand how your strategy is evaluated, but NEVER edit it.
 - `strategy.py` — your strategy code. THE ONLY FILE YOU EDIT.
 - `results.tsv` — experiment ledger. The eval appends to it automatically.
+- `leaderboard.tsv` — hall of fame. PASS-only results across all agents/machines. Same columns as results.tsv + `source` column. Read this first to know the current best.
 - `degen.md` — this file. Read it, follow it.
 
 ## How evaluation works
@@ -84,6 +86,7 @@ composite = (
 6. Check the output:
    - If `hard_gates=PASS` AND `composite` > previous best composite:
      - This is your new best. Keep the commit.
+     - Append the PASS row to `leaderboard.tsv` with your source name (e.g. `opus-manual`, `scout1-momentum`). Use the same columns as results.tsv + a `source` column at the end.
    - Else:
      - Revert: `git reset --hard HEAD~1`
 7. **NEVER STOP.** Go back to step 1.
@@ -157,5 +160,5 @@ Judge ideas by these questions:
 - Is the rule simple enough to generalize?
 
 ## Current best
-best_composite: 0.00
-best_strategy: none
+best_composite: 0.743
+best_strategy: ema_20_50_hh_hl_lb8_v1
