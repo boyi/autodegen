@@ -9,10 +9,11 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_v10"
+    name = "ema_20_50_hh_hl_volz_reentry_v1"
     description = (
-        "EMA 20/50 + HH/HL + vol_zscore sizing. Scale down when vol above "
-        "average (z>0), up when below. Z-score is regime-normalized."
+        "EMA 20/50 + HH/HL + vol_zscore sizing + trend re-entry. "
+        "After trailing stop exit, if trend & structure persist after "
+        "cooldown, re-enter to capture more of persistent trends."
     )
     parameters = {
         "ema_fast": 20,
@@ -21,6 +22,7 @@ class Strategy:
         "base_size": 0.87,
         "trail_pct": 0.019,
         "volz_scale": 0.17,
+        "reentry_cooldown": 12,
     }
 
     def initialize(self, train_data):
@@ -31,6 +33,8 @@ class Strategy:
         self.ema_slow_val = None
         self.prev_trend_up = False
         self.highest_since_entry = None
+        self.bars_since_exit = 999
+        self.trend_at_exit = False
 
     def _ema(self, prev, price, period):
         if prev is None:
@@ -62,17 +66,27 @@ class Strategy:
         uptrend_structure = hh and hl
 
         if current_pos == 0:
-            if trend_up and not self.prev_trend_up and uptrend_structure:
+            self.bars_since_exit += 1
+
+            # Normal entry: EMA crossover + structure
+            crossover_entry = trend_up and not self.prev_trend_up and uptrend_structure
+
+            # Re-entry: stopped out of a still-bullish trend, cooldown elapsed
+            reentry = (self.trend_at_exit
+                       and self.bars_since_exit >= self.parameters["reentry_cooldown"]
+                       and trend_up and uptrend_structure)
+
+            if crossover_entry or reentry:
                 size = self.parameters["base_size"]
                 extras = bar.extras or {}
                 volz = extras.get("vol_zscore_24h")
                 if volz is not None and volz == volz:
-                    # Negative volz = low vol = scale up, positive = high vol = scale down
                     scale = max(0.75, min(1.25, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
                 self.highest_since_entry = bar.high
                 self.prev_trend_up = True
+                self.trend_at_exit = False
                 return [{"side": "buy", "size": size}]
 
         if current_pos > 0:
@@ -80,6 +94,8 @@ class Strategy:
             trail_stop = self.highest_since_entry * (1.0 - self.parameters["trail_pct"])
             if bar.close <= trail_stop:
                 self.highest_since_entry = None
+                self.trend_at_exit = trend_up and uptrend_structure
+                self.bars_since_exit = 0
                 self.prev_trend_up = trend_up
                 return [{"side": "sell", "size": abs(current_pos)}]
 
