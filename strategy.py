@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v1"
+    name = "ema_20_50_hh_hl_volz_reentry_v2"
     description = (
         "EMA 20/50 + HH/HL + vol_zscore sizing + trend re-entry. "
         "After trailing stop exit, if trend & structure persist after "
@@ -19,7 +19,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.87,
+        "base_size": 0.84,
         "trail_pct": 0.019,
         "volz_scale": 0.17,
         "reentry_cooldown": 12,
