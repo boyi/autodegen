@@ -9,10 +9,10 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_voltarget_v39"
+    name = "ema_20_50_hh_hl_volz_v1"
     description = (
-        "EMA 20/50 + HH/HL + vol-targeting with narrow clamp [0.8, 1.2] "
-        "and larger base_size=0.50. Less vol-targeting variance, more leverage."
+        "EMA 20/50 + HH/HL + vol_zscore sizing. Scale down when vol above "
+        "average (z>0), up when below. Z-score is regime-normalized."
     )
     parameters = {
         "ema_fast": 20,
@@ -20,7 +20,7 @@ class Strategy:
         "structure_lookback": 8,
         "base_size": 0.70,
         "trail_pct": 0.019,
-        "target_vol": 0.029,
+        "volz_scale": 0.15,
     }
 
     def initialize(self, train_data):
@@ -65,9 +65,10 @@ class Strategy:
             if trend_up and not self.prev_trend_up and uptrend_structure:
                 size = self.parameters["base_size"]
                 extras = bar.extras or {}
-                vol = extras.get("realized_vol_24h")
-                if vol is not None and vol == vol and vol > 0.005:
-                    scale = max(0.75, min(1.25, self.parameters["target_vol"] / vol))
+                volz = extras.get("vol_zscore_24h")
+                if volz is not None and volz == volz:
+                    # Negative volz = low vol = scale up, positive = high vol = scale down
+                    scale = max(0.75, min(1.25, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
                 self.highest_since_entry = bar.high
