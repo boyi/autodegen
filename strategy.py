@@ -9,20 +9,21 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v4"
+    name = "ema_20_50_hh_hl_volz_reentry_v6"
     description = (
-        "EMA 20/50 + HH/HL + vol_zscore sizing + trend re-entry. "
-        "After trailing stop exit, if trend & structure persist after "
-        "cooldown, re-enter to capture more of persistent trends."
+        "EMA 20/50 + HH/HL + vol_zscore sizing + filtered re-entry. "
+        "Re-enter only when trend_consistency_3d > 0.33 (strong trend). "
+        "Filters bad re-entries to reduce drawdown."
     )
     parameters = {
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.799,
+        "base_size": 0.87,
         "trail_pct": 0.019,
         "volz_scale": 0.17,
         "reentry_cooldown": 12,
+        "reentry_trend_min": 0.33,
     }
 
     def initialize(self, train_data):
@@ -71,10 +72,15 @@ class Strategy:
             # Normal entry: EMA crossover + structure
             crossover_entry = trend_up and not self.prev_trend_up and uptrend_structure
 
-            # Re-entry: stopped out of a still-bullish trend, cooldown elapsed
+            # Re-entry: stopped out of a still-bullish trend, cooldown elapsed,
+            # AND enriched trend consistency confirms
+            extras = bar.extras or {}
+            trend_c = extras.get("trend_consistency_3d")
+            trend_strong = (trend_c is not None and trend_c == trend_c
+                            and trend_c > self.parameters["reentry_trend_min"])
             reentry = (self.trend_at_exit
                        and self.bars_since_exit >= self.parameters["reentry_cooldown"]
-                       and trend_up and uptrend_structure)
+                       and trend_up and uptrend_structure and trend_strong)
 
             if crossover_entry or reentry:
                 size = self.parameters["base_size"]
