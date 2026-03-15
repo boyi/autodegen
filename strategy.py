@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_v5"
+    name = "ema_20_50_hh_hl_volz_v6"
     description = (
         "EMA 20/50 + HH/HL + vol_zscore sizing. Scale down when vol above "
         "average (z>0), up when below. Z-score is regime-normalized."
@@ -18,7 +18,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.86,
+        "base_size": 0.87,
         "trail_pct": 0.019,
         "volz_scale": 0.15,
     }
