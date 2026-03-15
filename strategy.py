@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_voltarget_v35"
+    name = "ema_20_50_hh_hl_voltarget_v39"
     description = (
         "EMA 20/50 + HH/HL + vol-targeting with narrow clamp [0.8, 1.2] "
         "and larger base_size=0.50. Less vol-targeting variance, more leverage."
@@ -18,7 +18,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.73,
+        "base_size": 0.70,
         "trail_pct": 0.019,
         "target_vol": 0.029,
     }
@@ -67,7 +67,7 @@ class Strategy:
                 extras = bar.extras or {}
                 vol = extras.get("realized_vol_24h")
                 if vol is not None and vol == vol and vol > 0.005:
-                    scale = max(0.8, min(1.2, self.parameters["target_vol"] / vol))
+                    scale = max(0.75, min(1.25, self.parameters["target_vol"] / vol))
                     size = self.parameters["base_size"] * scale
 
                 self.highest_since_entry = bar.high
