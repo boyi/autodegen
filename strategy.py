@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v9"
+    name = "ema_20_50_hh_hl_volz_reentry_v10"
     description = (
         "EMA 20/50 + HH/HL + vol_zscore sizing + filtered re-entry. "
         "Re-enter only when trend_consistency_3d > 0.33 (strong trend). "
@@ -19,7 +19,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.799,
+        "base_size": 0.87,
         "trail_pct": 0.019,
         "volz_scale": 0.17,
         "reentry_cooldown": 12,
@@ -82,6 +82,7 @@ class Strategy:
                        and self.bars_since_exit >= self.parameters["reentry_cooldown"]
                        and trend_up and uptrend_structure and trend_strong)
 
+            is_reentry = reentry and not crossover_entry
             if crossover_entry or reentry:
                 size = self.parameters["base_size"]
                 extras = bar.extras or {}
@@ -90,6 +91,8 @@ class Strategy:
                     scale = max(0.75, min(1.25, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
+                if is_reentry:
+                    size *= 0.5  # half-size re-entries to limit downside
                 self.highest_since_entry = bar.high
                 self.prev_trend_up = True
                 self.trend_at_exit = False
