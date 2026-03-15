@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v17"
+    name = "ema_20_50_hh_hl_volz_reentry_v21"
     description = (
         "EMA 20/50 + HH/HL + vol_zscore sizing + filtered re-entry. "
         "Re-enter only when trend_consistency_3d > 0.33 (strong trend). "
@@ -88,7 +88,7 @@ class Strategy:
                 extras = bar.extras or {}
                 volz = extras.get("vol_zscore_24h")
                 if volz is not None and volz == volz:
-                    scale = max(0.75, min(1.25, 1.0 - self.parameters["volz_scale"] * volz))
+                    scale = max(0.65, min(1.35, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
                 if is_reentry:
