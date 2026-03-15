@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_voltarget_v23"
+    name = "ema_20_50_hh_hl_voltarget_v24"
     description = (
         "EMA 20/50 + HH/HL + vol-targeting with narrow clamp [0.8, 1.2] "
         "and larger base_size=0.50. Less vol-targeting variance, more leverage."
@@ -18,7 +18,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.60,
+        "base_size": 0.63,
         "trail_pct": 0.019,
         "target_vol": 0.028,
     }
