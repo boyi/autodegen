@@ -13,7 +13,11 @@ from statistics import fmean
 import ccxt  # type: ignore
 import polars as pl
 
-Bar = namedtuple("Bar", ["timestamp", "open", "high", "low", "close", "volume"])
+Bar = namedtuple(
+    "Bar",
+    ["timestamp", "open", "high", "low", "close", "volume", "extras"],
+    defaults=(None,),
+)
 REQUIRED_COLUMNS = ["timestamp", "open", "high", "low", "close", "volume"]
 EPS = 1e-12
 HOURS_PER_YEAR = 8760
@@ -22,6 +26,23 @@ CANONICAL_PAIR = "BTC/USDT:USDT"
 CANONICAL_TIMEFRAME = "1h"
 CANONICAL_START = datetime(2020, 1, 1, tzinfo=UTC)
 FRESHNESS_TOLERANCE = timedelta(hours=48)
+
+# External data from btc-prediction-py
+EXTERNAL_DATA_DIR = Path(__file__).resolve().parent.parent / "btc-prediction-py" / "data"
+EXTERNAL_OHLCV_SOURCE = "binance_perp"
+EXTERNAL_FACTORS_FILE = "factors_v3_24h"
+EXTERNAL_ENRICHMENT_SOURCES = [
+    "binance_funding",
+    "binance_spot",
+    "bybit_oi",
+    "bybit_funding",
+    "coinbase_spot",
+    "dxy",
+    "qqq",
+    "us_2y",
+    "us_10y",
+    "cme_btc_futures",
+]
 TARGET_TRAIN_HOURS = 180 * 24
 TARGET_TEST_HOURS = 45 * 24
 MIN_VALIDATION_HOURS = 90 * 24
@@ -212,7 +233,18 @@ def validate_dataset(
     freshness_tolerance: timedelta = FRESHNESS_TOLERANCE,
     n_folds: int = 6,
     validation_pct: float = 0.15,
+    source: str = "local",
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
 ) -> DatasetSummary:
+    if source == "external":
+        return validate_external_dataset(
+            external_dir=external_dir,
+            start=start,
+            freshness_tolerance=freshness_tolerance,
+            n_folds=n_folds,
+            validation_pct=validation_pct,
+        )
+
     summary = summarize_dataset(
         data_dir=data_dir,
         exchange=exchange,
@@ -239,6 +271,179 @@ def validate_dataset(
         )
 
     return summary
+
+
+def validate_external_dataset(
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
+    start: datetime = CANONICAL_START,
+    freshness_tolerance: timedelta = FRESHNESS_TOLERANCE,
+    n_folds: int = 6,
+    validation_pct: float = 0.15,
+) -> DatasetSummary:
+    """Validate external btc-prediction-py dataset for walk-forward readiness."""
+    df = load_external_ohlcv(external_dir)
+    timestamps = df["timestamp"].to_list()
+
+    for prev, curr in zip(timestamps, timestamps[1:]):
+        delta = curr - prev
+        if delta != timedelta(hours=1):
+            raise DataQualityError(
+                f"timestamp gap detected: {_as_utc(prev).isoformat()} -> {_as_utc(curr).isoformat()} ({delta.total_seconds() / 3600:.1f}h)"
+            )
+
+    first_bar = _as_utc(timestamps[0]) if timestamps else None
+    last_bar = _as_utc(timestamps[-1]) if timestamps else None
+    bar_count = len(df)
+    required_bars = _required_total_bars(n_folds=n_folds, validation_pct=validation_pct)
+
+    summary = DatasetSummary(
+        exchange="btc-prediction-py",
+        pair=EXTERNAL_OHLCV_SOURCE,
+        timeframe=CANONICAL_TIMEFRAME,
+        first_bar=first_bar,
+        last_bar=last_bar,
+        bar_count=bar_count,
+        total_days=bar_count / 24.0,
+        required_bars=required_bars,
+        full_wf_ready=bar_count >= required_bars,
+    )
+
+    if summary.bar_count == 0:
+        raise DataQualityError(f"no external data found in {external_dir}")
+    # Allow up to 24h slack — external clean data may drop initial NaN rows
+    if summary.first_bar is not None and summary.first_bar > start + timedelta(hours=24):
+        raise DataQualityError(
+            f"dataset starts too late: expected <= {start.isoformat()} (+24h tolerance), got {summary.first_bar.isoformat()}"
+        )
+    if not summary.full_wf_ready:
+        raise DataQualityError(
+            f"insufficient history: need >= {summary.required_bars} bars, got {summary.bar_count}"
+        )
+    if summary.last_bar is None:
+        raise DataQualityError("dataset is missing a last timestamp")
+    if datetime.now(UTC) - summary.last_bar > freshness_tolerance:
+        raise DataQualityError(
+            f"dataset is stale: last bar {summary.last_bar.isoformat()} is older than {freshness_tolerance}"
+        )
+
+    enrichment = _load_external_enrichment(external_dir)
+    enrichment_names = sorted(enrichment.keys())
+    total_extra_cols = sum(len(e.columns) - 1 for e in enrichment.values())
+    print(f"enrichment_sources={len(enrichment_names)} ({', '.join(enrichment_names)})")
+    print(f"enrichment_total_fields={total_extra_cols}")
+
+    return summary
+
+
+def load_external_ohlcv(
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
+    source: str = EXTERNAL_OHLCV_SOURCE,
+) -> pl.DataFrame:
+    """Load clean hourly OHLCV from btc-prediction-py clean data."""
+    path = Path(external_dir) / "clean" / f"{source}.parquet"
+    if not path.exists():
+        raise DataQualityError(f"external data not found: {path}")
+
+    import pyarrow.parquet as pq
+
+    table = pq.read_table(str(path))
+    pdf = table.to_pandas()
+
+    if pdf.index.name is None:
+        pdf.index.name = "timestamp"
+    pdf = pdf.reset_index()
+
+    ts_col = pdf.columns[0]
+    if ts_col != "timestamp":
+        pdf = pdf.rename(columns={ts_col: "timestamp"})
+
+    df = pl.from_pandas(pdf)
+    df = df.drop_nulls(subset=["open", "high", "low", "close"])
+
+    if df["timestamp"].dtype != pl.Datetime:
+        df = df.with_columns(pl.col("timestamp").cast(pl.Datetime("us", "UTC")))
+    elif df["timestamp"].dtype.time_zone is None:  # type: ignore[union-attr]
+        df = df.with_columns(pl.col("timestamp").dt.replace_time_zone("UTC"))
+
+    df = df.with_columns(
+        *[pl.col(c).cast(pl.Float64) for c in ["open", "high", "low", "close", "volume"]],
+    )
+
+    df = df.sort("timestamp").unique(subset=["timestamp"], keep="last")
+    validate_ohlcv(df.select(REQUIRED_COLUMNS))
+    return df
+
+
+def _load_external_enrichment(
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
+) -> dict[str, pl.DataFrame]:
+    """Load all enrichment sources (funding, OI, macro, etc.)."""
+    external_dir = Path(external_dir)
+    result: dict[str, pl.DataFrame] = {}
+
+    for source in EXTERNAL_ENRICHMENT_SOURCES:
+        path = external_dir / "clean" / f"{source}.parquet"
+        if not path.exists():
+            continue
+        import pyarrow.parquet as pq
+
+        table = pq.read_table(str(path))
+        pdf = table.to_pandas()
+        if pdf.index.name is None:
+            pdf.index.name = "timestamp"
+        pdf = pdf.reset_index()
+        ts_col = pdf.columns[0]
+        if ts_col != "timestamp":
+            pdf = pdf.rename(columns={ts_col: "timestamp"})
+        result[source] = pl.from_pandas(pdf)
+
+    factors_path = external_dir / "factors" / f"{EXTERNAL_FACTORS_FILE}.parquet"
+    if factors_path.exists():
+        import pyarrow.parquet as pq
+
+        table = pq.read_table(str(factors_path))
+        pdf = table.to_pandas()
+        if pdf.index.name is None:
+            pdf.index.name = "timestamp"
+        pdf = pdf.reset_index()
+        ts_col = pdf.columns[0]
+        if ts_col != "timestamp":
+            pdf = pdf.rename(columns={ts_col: "timestamp"})
+        result["factors"] = pl.from_pandas(pdf)
+
+    return result
+
+
+def load_enriched_bars(
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
+    ohlcv_source: str = EXTERNAL_OHLCV_SOURCE,
+) -> list[Bar]:
+    """Load OHLCV bars enriched with funding, OI, macro, and computed factors."""
+    ohlcv = load_external_ohlcv(external_dir, ohlcv_source)
+    enrichment = _load_external_enrichment(external_dir)
+
+    extras_by_ts: dict[datetime, dict[str, float | None]] = {}
+
+    for source_name, edf in enrichment.items():
+        ts_col = "timestamp"
+        if ts_col not in edf.columns:
+            continue
+        value_cols = [c for c in edf.columns if c != ts_col]
+        for row in edf.iter_rows(named=True):
+            ts = row[ts_col]
+            if ts not in extras_by_ts:
+                extras_by_ts[ts] = {}
+            for col in value_cols:
+                key = f"{source_name}__{col}" if source_name != "factors" else col
+                extras_by_ts[ts][key] = row[col]
+
+    bars: list[Bar] = []
+    for row in ohlcv.select(REQUIRED_COLUMNS).iter_rows():
+        ts = row[0]
+        ext = extras_by_ts.get(ts)
+        bars.append(Bar(row[0], row[1], row[2], row[3], row[4], row[5], ext))
+
+    return bars
 
 
 def fetch_data(
@@ -324,7 +529,11 @@ def load_bars(
     data_dir: str = "data",
     exchange: str = CANONICAL_EXCHANGE,
     pair: str = CANONICAL_PAIR,
+    source: str = "local",
+    external_dir: str | Path = EXTERNAL_DATA_DIR,
 ) -> list[Bar]:
+    if source == "external":
+        return load_enriched_bars(external_dir=external_dir)
     df = load_ohlcv(data_dir=data_dir, exchange=exchange, pair=pair)
     return [Bar(*row) for row in df.select(REQUIRED_COLUMNS).iter_rows()]
 
@@ -786,11 +995,15 @@ if __name__ == "__main__":
     validate_p.add_argument("--exchange", default=CANONICAL_EXCHANGE)
     validate_p.add_argument("--pair", default=CANONICAL_PAIR)
     validate_p.add_argument("--timeframe", default=CANONICAL_TIMEFRAME)
+    validate_p.add_argument("--source", choices=["local", "external"], default="local")
+    validate_p.add_argument("--external-dir", default=str(EXTERNAL_DATA_DIR))
 
     eval_p = sub.add_parser("eval")
     eval_p.add_argument("--exchange", default=CANONICAL_EXCHANGE)
     eval_p.add_argument("--pair", default=CANONICAL_PAIR)
     eval_p.add_argument("--timeframe", default=CANONICAL_TIMEFRAME)
+    eval_p.add_argument("--source", choices=["local", "external"], default="local")
+    eval_p.add_argument("--external-dir", default=str(EXTERNAL_DATA_DIR))
 
     args = parser.parse_args()
     try:
@@ -800,15 +1013,24 @@ if __name__ == "__main__":
             for p in paths:
                 print(p)
         elif args.cmd == "validate":
-            summary = validate_dataset(exchange=args.exchange, pair=args.pair, timeframe=args.timeframe)
+            source = getattr(args, "source", "local")
+            summary = validate_dataset(
+                exchange=args.exchange, pair=args.pair, timeframe=args.timeframe,
+                source=source, external_dir=getattr(args, "external_dir", str(EXTERNAL_DATA_DIR)),
+            )
             print_dataset_summary(summary)
             print("dataset_validation=PASS")
         elif args.cmd == "eval":
-            summary = validate_dataset(exchange=args.exchange, pair=args.pair, timeframe=args.timeframe)
+            source = getattr(args, "source", "local")
+            ext_dir = getattr(args, "external_dir", str(EXTERNAL_DATA_DIR))
+            summary = validate_dataset(
+                exchange=args.exchange, pair=args.pair, timeframe=args.timeframe,
+                source=source, external_dir=ext_dir,
+            )
             print_dataset_summary(summary)
             from strategy import Strategy
 
-            bars = load_bars(exchange=args.exchange, pair=args.pair)
+            bars = load_bars(exchange=args.exchange, pair=args.pair, source=source, external_dir=ext_dir)
             evaluate(Strategy, bars)
         else:
             parser.print_help()

@@ -1,7 +1,9 @@
 """
 autodegen strategy — THE ONLY FILE THE AGENT EDITS
-Run: python strategy.py
+Run: python strategy.py --source external
 """
+
+import argparse
 
 from prepare import evaluate, load_bars
 
@@ -83,5 +85,12 @@ class Strategy:
 
 # ---- DO NOT EDIT BELOW THIS LINE ----
 if __name__ == "__main__":
-    bars = load_bars()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source", choices=["local", "external"], default="external")
+    ap.add_argument("--external-dir", default=None)
+    args = ap.parse_args()
+    kwargs = {"source": args.source}
+    if args.external_dir:
+        kwargs["external_dir"] = args.external_dir
+    bars = load_bars(**kwargs)
     evaluate(Strategy, bars)
