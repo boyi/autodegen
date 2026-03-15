@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v16"
+    name = "ema_20_50_hh_hl_volz_reentry_v17"
     description = (
         "EMA 20/50 + HH/HL + vol_zscore sizing + filtered re-entry. "
         "Re-enter only when trend_consistency_3d > 0.33 (strong trend). "
@@ -21,7 +21,7 @@ class Strategy:
         "structure_lookback": 8,
         "base_size": 0.89,
         "trail_pct": 0.019,
-        "volz_scale": 0.28,
+        "volz_scale": 0.30,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
     }
