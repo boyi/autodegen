@@ -9,10 +9,10 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_3x_baseline_v1"
+    name = "ema_20_50_hh_only_v1"
     description = (
-        "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
-        "Clean baseline for 3x max leverage constraint."
+        "EMA 20/50 + HH-only entry (drop HL req) for better decay. "
+        "More signals in choppy regimes = uniform performance."
     )
     parameters = {
         "ema_fast": 20,
@@ -66,7 +66,7 @@ class Strategy:
         recent_low = min(self.low_history[-lookback:])
         prior_low = min(self.low_history[-lookback * 2:-lookback])
         hl = recent_low > prior_low
-        uptrend_structure = hh and hl
+        uptrend_structure = hh  # HH-only: more signals, better regime uniformity
 
         if current_pos == 0:
             self.bars_since_exit += 1
