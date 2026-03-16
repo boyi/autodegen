@@ -32,6 +32,7 @@ class Strategy:
         self.low_history = []
         self.ema_fast_val = None
         self.ema_slow_val = None
+        self.ema_macro_val = None
         self.prev_trend_up = False
         self.highest_since_entry = None
         self.bars_since_exit = 999
@@ -52,6 +53,7 @@ class Strategy:
 
         self.ema_fast_val = self._ema(self.ema_fast_val, bar.close, self.parameters["ema_fast"])
         self.ema_slow_val = self._ema(self.ema_slow_val, bar.close, self.parameters["ema_slow"])
+        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 100)
 
         lookback = self.parameters["structure_lookback"]
         if len(self.close_history) < max(lookback * 2, self.parameters["ema_slow"]):
@@ -133,6 +135,10 @@ class Strategy:
                 pe = extras.get("price_efficiency_72h")
                 if pe is not None and pe == pe:
                     size *= max(0.25, min(1.75, 0.25 + pe * 3.00))
+
+                # Macro trend: reduce when slow EMA below 100 EMA
+                if self.ema_slow_val < self.ema_macro_val:
+                    size *= 0.65
 
                 if is_reentry:
                     size *= 0.5
