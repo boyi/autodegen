@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_4f_progtrail_v5"
+    name = "ema_20_50_4f_progtrail_v6"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -129,7 +129,7 @@ class Strategy:
                 return [{"side": "sell", "size": abs(current_pos) * 0.55}]
 
             # Progressive trail: wider after TP (reduced position = house money)
-            trail = 0.022 if self.took_profit else self.parameters["trail_pct"]
+            trail = 0.021 if self.took_profit else self.parameters["trail_pct"]
             trail_stop = self.highest_since_entry * (1.0 - trail)
             if bar.close <= trail_stop:
                 self.highest_since_entry = None
