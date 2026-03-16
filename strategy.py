@@ -138,7 +138,7 @@ class Strategy:
 
                 # Macro trend: reduce when slow EMA below 100 EMA
                 if self.ema_slow_val < self.ema_macro_val:
-                    size *= 0.75
+                    size *= 0.82
 
                 if is_reentry:
                     size *= 0.5
