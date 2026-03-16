@@ -53,7 +53,7 @@ class Strategy:
 
         self.ema_fast_val = self._ema(self.ema_fast_val, bar.close, self.parameters["ema_fast"])
         self.ema_slow_val = self._ema(self.ema_slow_val, bar.close, self.parameters["ema_slow"])
-        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 112)
+        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 114)
 
         lookback = self.parameters["structure_lookback"]
         if len(self.close_history) < max(lookback * 2, self.parameters["ema_slow"]):
