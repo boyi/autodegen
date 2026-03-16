@@ -124,6 +124,11 @@ class Strategy:
                 if sm is not None and sm == sm:
                     size *= max(0.30, min(1.70, 0.65 + sm * 0.80))
 
+                # Net volume ratio: size with buying pressure
+                nvr = extras.get("net_volume_ratio_72h")
+                if nvr is not None and nvr == nvr:
+                    size *= max(0.60, min(1.40, 1.0 + nvr * 1.5))
+
                 if is_reentry:
                     size *= 0.5
                 self.highest_since_entry = bar.high
