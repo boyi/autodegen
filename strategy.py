@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_streak3_cap6_v1"
+    name = "ema_20_50_5f_streak3_cap55_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -129,7 +129,7 @@ class Strategy:
                 else:
                     size *= 0.85
 
-                size = min(size, 6.0)  # cap extreme positions
+                size = min(size, 5.5)  # cap extreme positions
 
                 if is_reentry:
                     size *= 0.5
