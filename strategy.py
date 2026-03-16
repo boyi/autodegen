@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_dyncap_v1"
+    name = "ema_20_50_5f_dyncap_trendtp_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -150,7 +150,10 @@ class Strategy:
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
                 self.took_profit = True
-                return [{"side": "sell", "size": abs(current_pos) * 0.55}]
+                # Trend-aware TP: sell less when EMA gap is wide (strong trend)
+                ema_gap_pct = (self.ema_fast_val - self.ema_slow_val) / self.ema_slow_val
+                tp_frac = 0.45 if ema_gap_pct > 0.02 else (0.65 if ema_gap_pct < 0.005 else 0.55)
+                return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Progressive trail: wider after TP (reduced position = house money)
             trail = 0.021 if self.took_profit else self.parameters["trail_pct"]
