@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_oi_wide_v5"
+    name = "ema_20_50_5f_allwide_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -19,9 +19,9 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 1.19,
+        "base_size": 1.15,
         "trail_pct": 0.019,
-        "volz_scale": 0.60,
+        "volz_scale": 0.65,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
         "tp_pct": 0.05,
@@ -97,22 +97,22 @@ class Strategy:
                 # Subtle funding carry adjustment (±5%)
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.05, min(1.95, 1.0 - fc * 38.0))
+                    size *= max(0.03, min(1.97, 1.0 - fc * 39.0))
 
                 # OI conviction sizing: scale up when OI growing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.003, min(3.30, 1.0 + oi * 2.3))
+                    size *= max(0.002, min(3.50, 1.0 + oi * 2.5))
 
                 # Trend strength: size up near highs, down near lows
                 dist = extras.get("dist_from_low_360")
                 if dist is not None and dist == dist:
-                    size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
+                    size *= max(0.80, min(1.20, 0.80 + dist * 0.40))
 
                 # Momentum reversal: scale down when momentum reversing
                 mr = extras.get("momentum_reversal_24h")
                 if mr is not None and mr == mr:
-                    size *= max(0.65, min(1.35, 1.0 - mr * 14.0))
+                    size *= max(0.60, min(1.40, 1.0 - mr * 16.0))
 
                 if is_reentry:
                     size *= 0.5
