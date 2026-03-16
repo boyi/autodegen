@@ -136,10 +136,15 @@ class Strategy:
         if current_pos > 0:
             self.highest_since_entry = max(self.highest_since_entry, bar.high)
 
-            # Partial profit-taking at tp_pct
+            # Adaptive TP: tighter in low vol (lock gains), wider in high vol (let ride)
+            extras = bar.extras or {}
+            volz_tp = extras.get("vol_zscore_24h")
+            tp_pct = self.parameters["tp_pct"]
+            if volz_tp is not None and volz_tp == volz_tp:
+                tp_pct = max(0.02, min(0.07, tp_pct + volz_tp * 0.015))
             if (not self.took_profit
                     and self.entry_price is not None
-                    and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
+                    and bar.close >= self.entry_price * (1.0 + tp_pct)):
                 self.took_profit = True
                 return [{"side": "sell", "size": abs(current_pos) * 0.40}]
 
