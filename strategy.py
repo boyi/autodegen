@@ -136,6 +136,12 @@ class Strategy:
                 if pe is not None and pe == pe:
                     size *= max(0.25, min(1.75, 0.25 + pe * 3.00))
 
+                # Trend slope: moderate when extreme (likely reversal)
+                ts = extras.get("trend_slope_3d")
+                if ts is not None and ts == ts:
+                    abs_slope = abs(ts)
+                    size *= max(0.80, min(1.0, 1.2 - abs_slope * 300.0))
+
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
                 macro_factor = max(0.50, min(1.0, 1.0 + macro_gap * 15.0))
