@@ -102,7 +102,7 @@ class Strategy:
                 # OI conviction sizing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.80, min(1.20, 1.0 + oi * 2.0))
+                    size *= max(0.75, min(1.25, 1.0 + oi * 2.5))
 
                 # Trend strength from distance
                 dist = extras.get("dist_from_low_360")
