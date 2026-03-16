@@ -127,12 +127,12 @@ class Strategy:
                 # Net volume ratio: size with buying pressure
                 nvr = extras.get("net_volume_ratio_72h")
                 if nvr is not None and nvr == nvr:
-                    size *= max(0.25, min(1.75, 1.0 + nvr * 3.3))
+                    size *= max(0.20, min(1.80, 1.0 + nvr * 3.5))
 
                 # Price efficiency: modest boost in clean moves
                 pe = extras.get("price_efficiency_72h")
                 if pe is not None and pe == pe:
-                    size *= max(0.30, min(1.70, 0.30 + pe * 2.80))
+                    size *= max(0.25, min(1.75, 0.25 + pe * 3.00))
 
                 if is_reentry:
                     size *= 0.5
