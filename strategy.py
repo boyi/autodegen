@@ -148,7 +148,7 @@ class Strategy:
                 self.took_profit = True
                 tp_frac = 0.40
                 if volz_tp is not None and volz_tp == volz_tp:
-                    tp_frac = max(0.30, min(0.50, 0.40 - volz_tp * 0.07))
+                    tp_frac = max(0.33, min(0.47, 0.40 - volz_tp * 0.05))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
