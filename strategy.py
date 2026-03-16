@@ -23,7 +23,7 @@ class Strategy:
         "volz_scale": 0.80,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
-        "tp_pct": 0.05,
+        "tp_pct": 0.04,
     }
 
     def initialize(self, train_data):
