@@ -165,5 +165,5 @@ The backtest engine enforces a **max leverage of 3x** (`max_leverage=3.0` in `ru
 Previous results (v1, unconstrained leverage) are archived in `results_v1_unconstrained.tsv` and `leaderboard_v1_unconstrained.tsv`.
 
 ## Current best
-best_composite: 0.966
-best_strategy: ema_20_50_hh_adaptive_tp_nvr_pe_v2
+best_composite: 0.968
+best_strategy: ema_20_50_hh_macro_adaptive_v1
