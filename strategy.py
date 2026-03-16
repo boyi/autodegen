@@ -20,7 +20,7 @@ class Strategy:
         "structure_lookback": 8,
         "base_size": 0.30,
         "trail_pct": 0.019,
-        "volz_scale": 0.80,
+        "volz_scale": 1.00,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
         "tp_pct": 0.04,
