@@ -136,9 +136,10 @@ class Strategy:
                 if pe is not None and pe == pe:
                     size *= max(0.25, min(1.75, 0.25 + pe * 3.00))
 
-                # Macro trend: reduce when slow EMA below 100 EMA
-                if self.ema_slow_val < self.ema_macro_val:
-                    size *= 0.965
+                # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
+                macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
+                macro_factor = max(0.90, min(1.0, 1.0 + macro_gap * 5.0))
+                size *= macro_factor
 
                 if is_reentry:
                     size *= 0.5
