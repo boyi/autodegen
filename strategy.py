@@ -134,7 +134,7 @@ class Strategy:
                 # Price efficiency: modest boost in clean moves
                 pe = extras.get("price_efficiency_72h")
                 if pe is not None and pe == pe:
-                    size *= max(0.25, min(1.75, 0.30 + pe * 3.00))
+                    size *= max(0.25, min(1.75, 0.35 + pe * 3.00))
 
                 # Trend slope: moderate when extreme (likely reversal)
                 ts = extras.get("trend_slope_3d")
