@@ -144,7 +144,7 @@ class Strategy:
 
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
-                macro_factor = max(0.44, min(1.0, 1.0 + macro_gap * 18.0))
+                macro_factor = max(0.42, min(1.0, 1.0 + macro_gap * 19.0))
                 size *= macro_factor
 
                 if is_reentry:
@@ -172,7 +172,7 @@ class Strategy:
                 pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
                 if pbr is not None and pbr == pbr:
-                    tp_frac = max(0.001, min(0.99, 1.09 - pbr * 1.34))
+                    tp_frac = max(0.001, min(0.995, 1.10 - pbr * 1.36))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
