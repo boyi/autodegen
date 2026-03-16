@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_volz_fund_oi_re_tp_v11"
+    name = "ema_20_50_volz_fund_oi_re_tp_v12"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -97,7 +97,7 @@ class Strategy:
                 # Subtle funding carry adjustment (±5%)
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.30, min(1.70, 1.0 - fc * 28.0))
+                    size *= max(0.20, min(1.80, 1.0 - fc * 32.0))
 
                 # OI conviction sizing: scale up when OI growing
                 oi = extras.get("oi_change_24h")
