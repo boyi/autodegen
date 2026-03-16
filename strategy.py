@@ -114,6 +114,11 @@ class Strategy:
                 if mr is not None and mr == mr:
                     size *= max(0.70, min(1.30, 1.0 - mr * 10.0))
 
+                # Sharpe momentum quality: size up in clean trends
+                sm = extras.get("sharpe_momentum_72h")
+                if sm is not None and sm == sm:
+                    size *= max(0.80, min(1.20, 0.90 + sm * 0.30))
+
                 if is_reentry:
                     size *= 0.5
                 self.highest_since_entry = bar.high
