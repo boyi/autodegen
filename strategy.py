@@ -9,11 +9,11 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_v24"
+    name = "ema_20_50_hh_hl_volz_reentry_tp_v1"
     description = (
-        "EMA 20/50 + HH/HL + vol_zscore sizing + filtered re-entry. "
-        "Re-enter only when trend_consistency_3d > 0.33 (strong trend). "
-        "Filters bad re-entries to reduce drawdown."
+        "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
+        "Sell half position when trade is +3% profitable. Locks in gains, "
+        "reduces downside exposure, improves sortino."
     )
     parameters = {
         "ema_fast": 20,
@@ -24,6 +24,7 @@ class Strategy:
         "volz_scale": 0.30,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
+        "tp_pct": 0.03,
     }
 
     def initialize(self, train_data):
@@ -36,6 +37,8 @@ class Strategy:
         self.highest_since_entry = None
         self.bars_since_exit = 999
         self.trend_at_exit = False
+        self.entry_price = None
+        self.took_profit = False
 
     def _ema(self, prev, price, period):
         if prev is None:
@@ -92,17 +95,28 @@ class Strategy:
                     size = self.parameters["base_size"] * scale
 
                 if is_reentry:
-                    size *= 0.5  # half-size re-entries to limit downside
+                    size *= 0.5
                 self.highest_since_entry = bar.high
+                self.entry_price = bar.close
+                self.took_profit = False
                 self.prev_trend_up = True
                 self.trend_at_exit = False
                 return [{"side": "buy", "size": size}]
 
         if current_pos > 0:
             self.highest_since_entry = max(self.highest_since_entry, bar.high)
+
+            # Partial profit-taking: sell half when +tp_pct%
+            if (not self.took_profit
+                    and self.entry_price is not None
+                    and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
+                self.took_profit = True
+                return [{"side": "sell", "size": abs(current_pos) * 0.5}]
+
             trail_stop = self.highest_since_entry * (1.0 - self.parameters["trail_pct"])
             if bar.close <= trail_stop:
                 self.highest_since_entry = None
+                self.entry_price = None
                 self.trend_at_exit = trend_up and uptrend_structure
                 self.bars_since_exit = 0
                 self.prev_trend_up = trend_up
