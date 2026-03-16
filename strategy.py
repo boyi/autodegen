@@ -140,7 +140,7 @@ class Strategy:
                 ts = extras.get("trend_slope_3d")
                 if ts is not None and ts == ts:
                     abs_slope = abs(ts)
-                    size *= max(0.40, min(1.0, 1.6 - abs_slope * 700.0))
+                    size *= max(0.30, min(1.0, 1.7 - abs_slope * 800.0))
 
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
@@ -172,7 +172,7 @@ class Strategy:
                 pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
                 if pbr is not None and pbr == pbr:
-                    tp_frac = max(0.003, min(0.95, 1.05 - pbr * 1.25))
+                    tp_frac = max(0.002, min(0.96, 1.06 - pbr * 1.28))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
