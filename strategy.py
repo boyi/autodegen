@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_volz_fund_oi_re_tp_v18"
+    name = "ema_20_50_4f_dist_re_tp_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -103,6 +103,11 @@ class Strategy:
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
                     size *= max(0.05, min(2.00, 1.0 + oi * 1.0))
+
+                # Trend strength: size up near highs, down near lows
+                dist = extras.get("dist_from_low_360")
+                if dist is not None and dist == dist:
+                    size *= max(0.80, min(1.20, 0.8 + dist * 0.4))
 
                 if is_reentry:
                     size *= 0.5
