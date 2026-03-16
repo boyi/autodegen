@@ -53,7 +53,7 @@ class Strategy:
 
         self.ema_fast_val = self._ema(self.ema_fast_val, bar.close, self.parameters["ema_fast"])
         self.ema_slow_val = self._ema(self.ema_slow_val, bar.close, self.parameters["ema_slow"])
-        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 100)
+        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 102)
 
         lookback = self.parameters["structure_lookback"]
         if len(self.close_history) < max(lookback * 2, self.parameters["ema_slow"]):
@@ -166,7 +166,7 @@ class Strategy:
                 pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
                 if pbr is not None and pbr == pbr:
-                    tp_frac = max(0.01, min(0.90, 1.00 - pbr * 1.15))
+                    tp_frac = max(0.005, min(0.92, 1.02 - pbr * 1.20))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
