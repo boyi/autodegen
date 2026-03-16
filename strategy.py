@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_4f_progtrail_wide_v3"
+    name = "ema_20_50_5f_momrev_progtrl_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -108,6 +108,11 @@ class Strategy:
                 dist = extras.get("dist_from_low_360")
                 if dist is not None and dist == dist:
                     size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
+
+                # Momentum reversal: scale down when momentum reversing
+                mr = extras.get("momentum_reversal_24h")
+                if mr is not None and mr == mr:
+                    size *= max(0.85, min(1.15, 1.0 - mr * 8.0))
 
                 if is_reentry:
                     size *= 0.5
