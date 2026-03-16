@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_streak_ultrawide_v4"
+    name = "ema_20_50_5f_streak3_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -115,11 +115,15 @@ class Strategy:
                 if mr is not None and mr == mr:
                     size *= max(0.60, min(1.40, 1.0 - mr * 16.0))
 
-                # Streak momentum: scale by consecutive win/loss streak
-                if self.streak >= 2:
+                # 3-level streak: deeper cuts on long losing streaks
+                if self.streak >= 3:
+                    size *= 1.30
+                elif self.streak >= 2:
                     size *= 1.20
                 elif self.streak >= 1:
                     size *= 1.10
+                elif self.streak <= -3:
+                    size *= 0.55
                 elif self.streak <= -2:
                     size *= 0.70
                 else:
