@@ -12,7 +12,7 @@ class Strategy:
     name = "ema_20_50_hh_trendfilt_v2"
     description = (
         "EMA 20/50 + HH-only + trend_consistency filter. "
-        "v2: binary vol gate + smaller base + tighter TP from ablation-driven optimization."
+        "v2: binary vol gate + TP vol sensitivity + macro EMA tuning from ablation analysis."
     )
     parameters = {
         "ema_fast": 20,
@@ -55,7 +55,7 @@ class Strategy:
 
         self.ema_fast_val = self._ema(self.ema_fast_val, bar.close, self.parameters["ema_fast"])
         self.ema_slow_val = self._ema(self.ema_slow_val, bar.close, self.parameters["ema_slow"])
-        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 114)
+        self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 120)
 
         current_pos = portfolio["position"]
 
@@ -106,7 +106,7 @@ class Strategy:
                 extras = bar.extras or {}
                 volz = extras.get("vol_zscore_24h")
                 if volz is not None and volz == volz:
-                    scale = max(0.42, min(1.58, 1.0 - self.parameters["volz_scale"] * volz))
+                    scale = max(0.38, min(1.62, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
                 # Funding carry adjustment
@@ -179,7 +179,7 @@ class Strategy:
             volz_tp = extras.get("vol_zscore_24h")
             tp_pct = self.parameters["tp_pct"]
             if volz_tp is not None and volz_tp == volz_tp:
-                tp_pct = max(0.02, min(0.07, tp_pct + volz_tp * 0.0205))
+                tp_pct = max(0.02, min(0.07, tp_pct + volz_tp * 0.025))
             if (not self.took_profit
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + tp_pct)):
