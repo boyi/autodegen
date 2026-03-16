@@ -9,21 +9,21 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_trendfilt_v1"
+    name = "ema_20_50_hh_trendfilt_v2"
     description = (
-        "EMA 20/50 + HH-only + trend_consistency filter on all entries. "
-        "HH-only for decay, trend filter for fold stability."
+        "EMA 20/50 + HH-only + trend_consistency filter. "
+        "v2: binary vol gate + smaller base + tighter TP from ablation-driven optimization."
     )
     parameters = {
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.30,
+        "base_size": 0.26,
         "trail_pct": 0.019,
-        "volz_scale": 3.00,
+        "volz_scale": 50.0,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
-        "tp_pct": 0.04,
+        "tp_pct": 0.0385,
     }
 
     def initialize(self, train_data):
