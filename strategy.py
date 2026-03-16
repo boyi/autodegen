@@ -132,7 +132,7 @@ class Strategy:
                 # Price efficiency: modest boost in clean moves
                 pe = extras.get("price_efficiency_72h")
                 if pe is not None and pe == pe:
-                    size *= max(0.88, min(1.12, 0.88 + pe * 0.48))
+                    size *= max(0.84, min(1.16, 0.84 + pe * 0.64))
 
                 if is_reentry:
                     size *= 0.5
