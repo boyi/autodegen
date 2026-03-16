@@ -9,17 +9,16 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_dyncap_trendtp_v1"
+    name = "ema_20_50_3x_baseline_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
-        "Sell half position when trade is +3% profitable. Locks in gains, "
-        "reduces downside exposure, improves sortino."
+        "Clean baseline for 3x max leverage constraint."
     )
     parameters = {
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 3.10,
+        "base_size": 0.04,
         "trail_pct": 0.019,
         "volz_scale": 0.80,
         "reentry_cooldown": 12,
@@ -39,7 +38,6 @@ class Strategy:
         self.trend_at_exit = False
         self.entry_price = None
         self.took_profit = False
-        self.streak = 1  # positive = consecutive wins, negative = losses
 
     def _ema(self, prev, price, period):
         if prev is None:
@@ -73,11 +71,8 @@ class Strategy:
         if current_pos == 0:
             self.bars_since_exit += 1
 
-            # Normal entry: EMA crossover + structure
             crossover_entry = trend_up and not self.prev_trend_up and uptrend_structure
 
-            # Re-entry: stopped out of a still-bullish trend, cooldown elapsed,
-            # AND enriched trend consistency confirms
             extras = bar.extras or {}
             trend_c = extras.get("trend_consistency_3d")
             trend_strong = (trend_c is not None and trend_c == trend_c
@@ -95,43 +90,25 @@ class Strategy:
                     scale = max(0.50, min(1.50, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
-                # Subtle funding carry adjustment (±5%)
+                # Funding carry adjustment
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.01, min(2.00, 1.0 - fc * 40.0))
+                    size *= max(0.80, min(1.20, 1.0 - fc * 20.0))
 
-                # OI conviction sizing: scale up when OI growing
+                # OI conviction sizing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.001, min(4.00, 1.0 + oi * 3.0))
+                    size *= max(0.80, min(1.20, 1.0 + oi * 2.0))
 
-                # Trend strength: size up near highs, down near lows
+                # Trend strength from distance
                 dist = extras.get("dist_from_low_360")
                 if dist is not None and dist == dist:
-                    size *= max(0.80, min(1.20, 0.80 + dist * 0.40))
+                    size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
 
-                # Momentum reversal: scale down when momentum reversing
+                # Momentum reversal filter
                 mr = extras.get("momentum_reversal_24h")
                 if mr is not None and mr == mr:
-                    size *= max(0.60, min(1.40, 1.0 - mr * 16.0))
-
-                # 3-level streak: deeper cuts on long losing streaks
-                if self.streak >= 3:
-                    size *= 1.30
-                elif self.streak >= 2:
-                    size *= 1.20
-                elif self.streak >= 1:
-                    size *= 1.10
-                elif self.streak <= -3:
-                    size *= 0.55
-                elif self.streak <= -2:
-                    size *= 0.70
-                else:
-                    size *= 0.85
-
-                # Dynamic cap: tighter during losing streaks
-                cap = 6.0 if self.streak >= 2 else (5.2 if self.streak >= 0 else 3.5)
-                size = min(size, cap)
+                    size *= max(0.70, min(1.30, 1.0 - mr * 10.0))
 
                 if is_reentry:
                     size *= 0.5
@@ -145,25 +122,17 @@ class Strategy:
         if current_pos > 0:
             self.highest_since_entry = max(self.highest_since_entry, bar.high)
 
-            # Partial profit-taking: sell half when +tp_pct%
+            # Partial profit-taking at tp_pct
             if (not self.took_profit
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
                 self.took_profit = True
-                # Trend-aware TP: sell less when EMA gap is wide (strong trend)
-                ema_gap_pct = (self.ema_fast_val - self.ema_slow_val) / self.ema_slow_val
-                tp_frac = 0.45 if ema_gap_pct > 0.02 else (0.65 if ema_gap_pct < 0.005 else 0.55)
-                return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
+                return [{"side": "sell", "size": abs(current_pos) * 0.50}]
 
-            # Progressive trail: wider after TP (reduced position = house money)
+            # Trail stop (wider after TP)
             trail = 0.021 if self.took_profit else self.parameters["trail_pct"]
             trail_stop = self.highest_since_entry * (1.0 - trail)
             if bar.close <= trail_stop:
-                won = self.entry_price is not None and bar.close > self.entry_price
-                if won:
-                    self.streak = max(1, self.streak + 1) if self.streak > 0 else 1
-                else:
-                    self.streak = min(-1, self.streak - 1) if self.streak < 0 else -1
                 self.highest_since_entry = None
                 self.entry_price = None
                 self.trend_at_exit = trend_up and uptrend_structure

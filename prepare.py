@@ -569,6 +569,7 @@ def run_backtest(
     maker_fee: float = 0.0002,
     taker_fee: float = 0.0005,
     slippage_factor: float = 0.1,
+    max_leverage: float = 3.0,
 ) -> BacktestResult:
     if not bars:
         return BacktestResult([], [], [], initial_cash, 0.0, 0.0)
@@ -587,6 +588,15 @@ def run_backtest(
             side = signal["side"]
             size = float(signal["size"])
             price = _fill_price(side, size, bar, slippage_factor)
+
+            # Enforce max leverage constraint
+            if side == "buy" and max_leverage > 0:
+                equity = cash + position * bar.open
+                max_size = max_leverage * equity / max(price, 1.0)
+                allowed = max(0.0, max_size - position)
+                size = min(size, allowed)
+                if size < EPS:
+                    continue
             qty = size if side == "buy" else -size
             fee = abs(size * price) * taker_fee
 

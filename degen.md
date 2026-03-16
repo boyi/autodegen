@@ -159,6 +159,11 @@ Judge ideas by these questions:
 - Which evaluation bottleneck is it meant to improve?
 - Is the rule simple enough to generalize?
 
+## Leverage constraint
+The backtest engine enforces a **max leverage of 3x** (`max_leverage=3.0` in `run_backtest()`). Before any buy signal executes, position size is capped so total position notional never exceeds 3× equity. This reflects real exchange margin limits and prevents unrealistic backtests.
+
+Previous results (v1, unconstrained leverage) are archived in `results_v1_unconstrained.tsv` and `leaderboard_v1_unconstrained.tsv`.
+
 ## Current best
-best_composite: 0.743
-best_strategy: ema_20_50_hh_hl_lb8_v1
+best_composite: 0.000
+best_strategy: none (restarted with 3x leverage constraint)
