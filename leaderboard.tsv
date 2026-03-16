@@ -1,1 +1,2 @@
 timestamp	name	composite	bar_sharpe_wf	bar_sharpe_val	decay	maxdd_wf	maxdd_val	trades_wf	trades_val	fold_std	neg_folds	profit_factor	calmar	n_params	status	source
+2026-03-16T05:00:00.000000+00:00	ema_20_50_hh_trendfilt_v2	0.914126	3.990739	2.123299	0.532057	0.004714	0.031065	87	54	1.249175	0.000000	5.112734	27.563479	11	PASS	opus-manual
