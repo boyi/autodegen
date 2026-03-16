@@ -109,6 +109,11 @@ class Strategy:
                 if dist is not None and dist == dist:
                     size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
 
+                # Vol percentile: size down when vol is historically extreme
+                vpr = extras.get("vol_pctrank_720")
+                if vpr is not None and vpr == vpr:
+                    size *= max(0.80, min(1.10, 1.20 - vpr * 0.40))
+
                 # Momentum reversal filter
                 mr = extras.get("momentum_reversal_24h")
                 if mr is not None and mr == mr:
