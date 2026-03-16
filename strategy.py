@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_4f_progtrail_v8"
+    name = "ema_20_50_4f_progtrail_wide_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -21,7 +21,7 @@ class Strategy:
         "structure_lookback": 8,
         "base_size": 1.19,
         "trail_pct": 0.019,
-        "volz_scale": 0.50,
+        "volz_scale": 0.60,
         "reentry_cooldown": 12,
         "reentry_trend_min": 0.33,
         "tp_pct": 0.05,
@@ -97,12 +97,12 @@ class Strategy:
                 # Subtle funding carry adjustment (±5%)
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.20, min(1.80, 1.0 - fc * 32.0))
+                    size *= max(0.15, min(1.85, 1.0 - fc * 34.0))
 
                 # OI conviction sizing: scale up when OI growing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.05, min(2.00, 1.0 + oi * 1.0))
+                    size *= max(0.03, min(2.20, 1.0 + oi * 1.2))
 
                 # Trend strength: size up near highs, down near lows
                 dist = extras.get("dist_from_low_360")
