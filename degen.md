@@ -166,4 +166,4 @@ Previous results (v1, unconstrained leverage) are archived in `results_v1_uncons
 
 ## Current best
 best_composite: 0.976
-best_strategy: ema_20_50_hh_macro_trendslope_v3
+best_strategy: ema_20_50_hh_macro_trendslope_v4
