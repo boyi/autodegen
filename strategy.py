@@ -18,7 +18,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 0.04,
+        "base_size": 0.30,
         "trail_pct": 0.019,
         "volz_scale": 0.80,
         "reentry_cooldown": 12,
