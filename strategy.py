@@ -117,7 +117,7 @@ class Strategy:
                 # OI conviction sizing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.75, min(1.25, 1.0 + oi * 2.5))
+                    size *= max(0.75, min(1.25, 1.0 + oi * 4.5))
 
                 # Trend strength from distance
                 dist = extras.get("dist_from_low_360")
@@ -132,7 +132,7 @@ class Strategy:
                 # Momentum reversal filter
                 mr = extras.get("momentum_reversal_24h")
                 if mr is not None and mr == mr:
-                    size *= max(0.70, min(1.30, 1.0 - mr * 10.0))
+                    size *= max(0.70, min(1.30, 1.0 - mr * 15.0))
 
                 # Sharpe momentum quality: size up in clean trends
                 sm = extras.get("sharpe_momentum_72h")
@@ -187,7 +187,7 @@ class Strategy:
                 pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
                 if pbr is not None and pbr == pbr:
-                    tp_frac = max(0.001, min(0.999, 1.20 - pbr * 1.60))
+                    tp_frac = max(0.001, min(0.999, 1.20 - pbr * 2.00))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
