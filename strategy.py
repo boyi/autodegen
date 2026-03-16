@@ -107,7 +107,7 @@ class Strategy:
                 # Trend strength from distance
                 dist = extras.get("dist_from_low_360")
                 if dist is not None and dist == dist:
-                    size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
+                    size *= max(0.70, min(1.30, 0.70 + dist * 0.60))
 
                 # Vol percentile: size down when vol is historically extreme
                 vpr = extras.get("vol_pctrank_720")
