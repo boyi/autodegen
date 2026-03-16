@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_oi_wide_v3"
+    name = "ema_20_50_5f_oi_wide_v4"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -102,7 +102,7 @@ class Strategy:
                 # OI conviction sizing: scale up when OI growing
                 oi = extras.get("oi_change_24h")
                 if oi is not None and oi == oi:
-                    size *= max(0.005, min(3.00, 1.0 + oi * 2.0))
+                    size *= max(0.003, min(3.30, 1.0 + oi * 2.3))
 
                 # Trend strength: size up near highs, down near lows
                 dist = extras.get("dist_from_low_360")
