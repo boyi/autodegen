@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_allwide_v2"
+    name = "ema_20_50_5f_allwide_v3"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -19,7 +19,7 @@ class Strategy:
         "ema_fast": 20,
         "ema_slow": 50,
         "structure_lookback": 8,
-        "base_size": 1.19,
+        "base_size": 1.22,
         "trail_pct": 0.019,
         "volz_scale": 0.65,
         "reentry_cooldown": 12,
