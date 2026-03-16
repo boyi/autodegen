@@ -122,7 +122,7 @@ class Strategy:
                 # Sharpe momentum quality: size up in clean trends
                 sm = extras.get("sharpe_momentum_72h")
                 if sm is not None and sm == sm:
-                    size *= max(0.50, min(1.50, 0.75 + sm * 0.60))
+                    size *= max(0.40, min(1.60, 0.70 + sm * 0.70))
 
                 if is_reentry:
                     size *= 0.5
