@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_eqmom_v9"
+    name = "ema_20_50_5f_streak_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -39,7 +39,7 @@ class Strategy:
         self.trend_at_exit = False
         self.entry_price = None
         self.took_profit = False
-        self.last_trade_won = True  # start optimistic
+        self.streak = 1  # positive = consecutive wins, negative = losses
 
     def _ema(self, prev, price, period):
         if prev is None:
@@ -115,8 +115,15 @@ class Strategy:
                 if mr is not None and mr == mr:
                     size *= max(0.60, min(1.40, 1.0 - mr * 16.0))
 
-                # Equity momentum: reduce after losses, increase after wins
-                size *= 1.10 if self.last_trade_won else 0.85
+                # Streak momentum: scale by consecutive win/loss streak
+                if self.streak >= 2:
+                    size *= 1.20
+                elif self.streak >= 1:
+                    size *= 1.10
+                elif self.streak <= -2:
+                    size *= 0.70
+                else:
+                    size *= 0.85
 
                 if is_reentry:
                     size *= 0.5
@@ -141,7 +148,11 @@ class Strategy:
             trail = 0.021 if self.took_profit else self.parameters["trail_pct"]
             trail_stop = self.highest_since_entry * (1.0 - trail)
             if bar.close <= trail_stop:
-                self.last_trade_won = self.entry_price is not None and bar.close > self.entry_price
+                won = self.entry_price is not None and bar.close > self.entry_price
+                if won:
+                    self.streak = max(1, self.streak + 1) if self.streak > 0 else 1
+                else:
+                    self.streak = min(-1, self.streak - 1) if self.streak < 0 else -1
                 self.highest_since_entry = None
                 self.entry_price = None
                 self.trend_at_exit = trend_up and uptrend_structure
