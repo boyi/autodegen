@@ -131,7 +131,7 @@ class Strategy:
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
                 self.took_profit = True
-                return [{"side": "sell", "size": abs(current_pos) * 0.50}]
+                return [{"side": "sell", "size": abs(current_pos) * 0.40}]
 
             # Trail stop (wider after TP)
             trail = 0.021 if self.took_profit else self.parameters["trail_pct"]
