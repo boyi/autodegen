@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_4f_dist_re_tp_v1"
+    name = "ema_20_50_4f_dist_re_tp_v2"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -107,7 +107,7 @@ class Strategy:
                 # Trend strength: size up near highs, down near lows
                 dist = extras.get("dist_from_low_360")
                 if dist is not None and dist == dist:
-                    size *= max(0.80, min(1.20, 0.8 + dist * 0.4))
+                    size *= max(0.85, min(1.15, 0.85 + dist * 0.30))
 
                 if is_reentry:
                     size *= 0.5
