@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_hl_volz_reentry_tp_v23"
+    name = "ema_20_50_hh_hl_volz_re_tp55_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -111,7 +111,7 @@ class Strategy:
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + self.parameters["tp_pct"])):
                 self.took_profit = True
-                return [{"side": "sell", "size": abs(current_pos) * 0.5}]
+                return [{"side": "sell", "size": abs(current_pos) * 0.55}]
 
             trail_stop = self.highest_since_entry * (1.0 - self.parameters["trail_pct"])
             if bar.close <= trail_stop:
