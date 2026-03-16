@@ -9,7 +9,7 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_5f_streak3_cap52_v7"
+    name = "ema_20_50_5f_dyncap_v1"
     description = (
         "EMA 20/50 + HH/HL + volz sizing + filtered re-entry + partial TP. "
         "Sell half position when trade is +3% profitable. Locks in gains, "
@@ -129,7 +129,9 @@ class Strategy:
                 else:
                     size *= 0.85
 
-                size = min(size, 5.2)  # cap extreme positions
+                # Dynamic cap: tighter during losing streaks
+                cap = 6.0 if self.streak >= 2 else (5.2 if self.streak >= 0 else 3.5)
+                size = min(size, cap)
 
                 if is_reentry:
                     size *= 0.5
