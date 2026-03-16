@@ -138,7 +138,7 @@ class Strategy:
 
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
-                macro_factor = max(0.70, min(1.0, 1.0 + macro_gap * 9.0))
+                macro_factor = max(0.65, min(1.0, 1.0 + macro_gap * 10.0))
                 size *= macro_factor
 
                 if is_reentry:
