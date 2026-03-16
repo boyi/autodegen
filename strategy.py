@@ -141,7 +141,7 @@ class Strategy:
             volz_tp = extras.get("vol_zscore_24h")
             tp_pct = self.parameters["tp_pct"]
             if volz_tp is not None and volz_tp == volz_tp:
-                tp_pct = max(0.02, min(0.07, tp_pct + volz_tp * 0.019))
+                tp_pct = max(0.02, min(0.07, tp_pct + volz_tp * 0.0195))
             if (not self.took_profit
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + tp_pct)):
