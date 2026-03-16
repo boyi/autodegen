@@ -112,7 +112,7 @@ class Strategy:
                 # Vol percentile: size down when vol is historically extreme
                 vpr = extras.get("vol_pctrank_720")
                 if vpr is not None and vpr == vpr:
-                    size *= max(0.80, min(1.10, 1.20 - vpr * 0.40))
+                    size *= max(0.70, min(1.15, 1.25 - vpr * 0.50))
 
                 # Momentum reversal filter
                 mr = extras.get("momentum_reversal_24h")
