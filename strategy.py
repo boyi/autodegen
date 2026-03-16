@@ -9,10 +9,10 @@ from prepare import evaluate, load_bars
 
 
 class Strategy:
-    name = "ema_20_50_hh_only_v1"
+    name = "ema_20_50_hh_trendfilt_v1"
     description = (
-        "EMA 20/50 + HH-only entry (drop HL req) for better decay. "
-        "More signals in choppy regimes = uniform performance."
+        "EMA 20/50 + HH-only + trend_consistency filter on all entries. "
+        "HH-only for decay, trend filter for fold stability."
     )
     parameters = {
         "ema_fast": 20,
@@ -71,10 +71,14 @@ class Strategy:
         if current_pos == 0:
             self.bars_since_exit += 1
 
-            crossover_entry = trend_up and not self.prev_trend_up and uptrend_structure
-
             extras = bar.extras or {}
             trend_c = extras.get("trend_consistency_3d")
+            trend_ok = (trend_c is None or trend_c != trend_c
+                        or trend_c > self.parameters["reentry_trend_min"])
+
+            crossover_entry = (trend_up and not self.prev_trend_up
+                               and uptrend_structure and trend_ok)
+
             trend_strong = (trend_c is not None and trend_c == trend_c
                             and trend_c > self.parameters["reentry_trend_min"])
             reentry = (self.trend_at_exit
