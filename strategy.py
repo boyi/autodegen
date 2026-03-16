@@ -39,6 +39,8 @@ class Strategy:
         self.trend_at_exit = False
         self.entry_price = None
         self.took_profit = False
+        self.prev_position = 0.0
+        self.pending_entry = False
 
     def _ema(self, prev, price, period):
         if prev is None:
@@ -55,11 +57,22 @@ class Strategy:
         self.ema_slow_val = self._ema(self.ema_slow_val, bar.close, self.parameters["ema_slow"])
         self.ema_macro_val = self._ema(self.ema_macro_val, bar.close, 114)
 
+        current_pos = portfolio["position"]
+
+        # Detect fill: position went from 0 to >0 → entry was executed this bar
+        if self.pending_entry and current_pos > 0 and self.prev_position == 0:
+            self.entry_price = bar.open  # best proxy for fill price
+            self.highest_since_entry = bar.high
+            self.took_profit = False
+            self.pending_entry = False
+        elif self.pending_entry and current_pos == 0:
+            # Signal was sent but not filled (e.g. leverage cap rejected)
+            self.pending_entry = False
+        self.prev_position = current_pos
+
         lookback = self.parameters["structure_lookback"]
         if len(self.close_history) < max(lookback * 2, self.parameters["ema_slow"]):
             return []
-
-        current_pos = portfolio["position"]
         trend_up = self.ema_fast_val > self.ema_slow_val
 
         recent_high = max(self.high_history[-lookback:])
@@ -153,14 +166,12 @@ class Strategy:
                 equity = portfolio["equity"]
                 max_size = 2.3 * equity / max(bar.close, 1.0)
                 size = min(size, max_size)
-                self.highest_since_entry = bar.high
-                self.entry_price = bar.close
-                self.took_profit = False
+                self.pending_entry = True
                 self.prev_trend_up = True
                 self.trend_at_exit = False
                 return [{"side": "buy", "size": size}]
 
-        if current_pos > 0:
+        if current_pos > 0 and self.highest_since_entry is not None:
             self.highest_since_entry = max(self.highest_since_entry, bar.high)
 
             # Adaptive TP: tighter in low vol (lock gains), wider in high vol (let ride)
