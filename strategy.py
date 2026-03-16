@@ -124,7 +124,7 @@ class Strategy:
                 # Sharpe momentum quality: size up in clean trends
                 sm = extras.get("sharpe_momentum_72h")
                 if sm is not None and sm == sm:
-                    size *= max(0.30, min(1.70, 0.80 + sm * 0.80))
+                    size *= max(0.30, min(1.70, 0.85 + sm * 0.80))
 
                 # Net volume ratio: size with buying pressure
                 nvr = extras.get("net_volume_ratio_72h")
@@ -144,7 +144,7 @@ class Strategy:
 
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
-                macro_factor = max(0.25, min(1.0, 1.0 + macro_gap * 35.0))
+                macro_factor = max(0.20, min(1.0, 1.0 + macro_gap * 40.0))
                 size *= macro_factor
 
                 if is_reentry:
