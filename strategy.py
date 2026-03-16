@@ -112,7 +112,7 @@ class Strategy:
                 # Funding carry adjustment
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.30, min(1.70, 1.15 - fc * 50.0))
+                    size *= max(0.20, min(1.90, 1.20 - fc * 60.0))
 
                 # OI conviction sizing
                 oi = extras.get("oi_change_24h")
@@ -127,7 +127,7 @@ class Strategy:
                 # Vol percentile: size down when vol is historically extreme
                 vpr = extras.get("vol_pctrank_720")
                 if vpr is not None and vpr == vpr:
-                    size *= max(0.10, min(1.55, 1.65 - vpr * 1.22))
+                    size *= max(0.05, min(1.80, 1.90 - vpr * 1.45))
 
                 # Momentum reversal filter
                 mr = extras.get("momentum_reversal_24h")
@@ -142,7 +142,7 @@ class Strategy:
                 # Net volume ratio: size with buying pressure
                 nvr = extras.get("net_volume_ratio_72h")
                 if nvr is not None and nvr == nvr:
-                    size *= max(0.20, min(1.80, 1.20 + nvr * 3.5))
+                    size *= max(0.15, min(2.00, 1.25 + nvr * 4.0))
 
                 # Price efficiency: modest boost in clean moves
                 pe = extras.get("price_efficiency_72h")
