@@ -97,7 +97,7 @@ class Strategy:
                 # Funding carry adjustment
                 fc = extras.get("funding_cumsum_3d")
                 if fc is not None and fc == fc:
-                    size *= max(0.70, min(1.30, 1.0 - fc * 25.0))
+                    size *= max(0.50, min(1.50, 1.0 - fc * 35.0))
 
                 # OI conviction sizing
                 oi = extras.get("oi_change_24h")
