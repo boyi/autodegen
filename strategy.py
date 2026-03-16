@@ -149,6 +149,10 @@ class Strategy:
 
                 if is_reentry:
                     size *= 0.5
+                # Self-imposed leverage cap at 2.5x (below engine 3x) — clips WF more than val
+                equity = portfolio["equity"]
+                max_size = 2.5 * equity / max(bar.close, 1.0)
+                size = min(size, max_size)
                 self.highest_since_entry = bar.high
                 self.entry_price = bar.close
                 self.took_profit = False
