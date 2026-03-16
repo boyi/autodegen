@@ -159,7 +159,7 @@ class Strategy:
                 pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
                 if pbr is not None and pbr == pbr:
-                    tp_frac = max(0.02, min(0.85, 0.95 - pbr * 1.05))
+                    tp_frac = max(0.01, min(0.90, 1.00 - pbr * 1.15))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
