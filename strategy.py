@@ -146,9 +146,10 @@ class Strategy:
                     and self.entry_price is not None
                     and bar.close >= self.entry_price * (1.0 + tp_pct)):
                 self.took_profit = True
+                pbr = extras.get("positive_bar_ratio_72h")
                 tp_frac = 0.40
-                if volz_tp is not None and volz_tp == volz_tp:
-                    tp_frac = max(0.35, min(0.45, 0.40 - volz_tp * 0.04))
+                if pbr is not None and pbr == pbr:
+                    tp_frac = max(0.30, min(0.50, 0.60 - pbr * 0.40))
                 return [{"side": "sell", "size": abs(current_pos) * tp_frac}]
 
             # Trail stop (wider after TP)
