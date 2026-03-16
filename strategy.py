@@ -140,7 +140,7 @@ class Strategy:
                 ts = extras.get("trend_slope_3d")
                 if ts is not None and ts == ts:
                     abs_slope = abs(ts)
-                    size *= max(0.30, min(1.0, 1.7 - abs_slope * 800.0))
+                    size *= max(0.35, min(1.0, 1.65 - abs_slope * 750.0))
 
                 # Macro trend: smooth sizing based on EMA50 vs EMA100 gap
                 macro_gap = (self.ema_slow_val - self.ema_macro_val) / max(self.ema_macro_val, 1.0)
