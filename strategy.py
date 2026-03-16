@@ -91,7 +91,7 @@ class Strategy:
                 extras = bar.extras or {}
                 volz = extras.get("vol_zscore_24h")
                 if volz is not None and volz == volz:
-                    scale = max(0.50, min(1.50, 1.0 - self.parameters["volz_scale"] * volz))
+                    scale = max(0.42, min(1.58, 1.0 - self.parameters["volz_scale"] * volz))
                     size = self.parameters["base_size"] * scale
 
                 # Funding carry adjustment
